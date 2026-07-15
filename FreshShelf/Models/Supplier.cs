@@ -19,7 +19,7 @@ public class Supplier
     public string Region { get; set; } = string.Empty;
 
 
-    public SupplierStatus Status { get; set; } = SupplierStatus.Pending;
+    public SupplierStatus Status { get; set; } = SupplierStatus.Approved;
     public ICollection<Product> Products { get; set; } = new List<Product>();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
