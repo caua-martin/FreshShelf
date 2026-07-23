@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using FreshShelf.Data;
@@ -11,6 +12,7 @@ using FreshShelf.Models.Enums;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.OpenApi.Models;
 //using FreshShelf.Repositories;
 // 1. Instancia o seu repositório
 //var repositorio = new FreshShelfRepository();
@@ -53,10 +55,14 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("ProductConnection");
 
 builder.Services.AddDbContext<ProductContext>(opts =>
-    opts.UseMySql(
+    opts.UseLazyLoadingProxies().UseMySql(
         connectionString,
         new MySqlServerVersion(new Version(8, 0, 36))
     ));
+
+builder.Services.
+    AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -67,8 +73,14 @@ string conexao = configuration.GetConnectionString("ProductConnection");
 
 Console.WriteLine(conexao);
 // Adiciona os serviços do Swagger
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "FilmesAPI", Version = "v1" });
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+});
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
