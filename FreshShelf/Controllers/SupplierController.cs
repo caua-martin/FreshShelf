@@ -1,6 +1,10 @@
-﻿using FreshShelf.Models;
+﻿using AutoMapper;
+using FreshShelf.Data;
+using FreshShelf.Data.Dtos;
+using FreshShelf.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 
 namespace FreshShelf.Controllers;
 
@@ -8,36 +12,54 @@ namespace FreshShelf.Controllers;
 [Route("[controller]")]
 public class SupplierController : ControllerBase
 {
-    private static List<Supplier> suppliers = new List<Supplier>();
-    private static int nextId = 0;
+    private ProductContext _context;
+    private IMapper _mapper;
+
+    public SupplierController(ProductContext context, IMapper mapper)
+    {
+        _context = context;
+        _mapper = mapper;
+    }
 
     [HttpPost]
-    public CreatedAtActionResult CreateSupplier([FromBody] Supplier supplier)
+    public IActionResult CreateSupplier([FromBody] CreateSupplierDto supplierDto)
     {
-        supplier.Id = nextId++;
-        suppliers.Add(supplier);
+        Supplier supplier = _mapper.Map<Supplier>(supplierDto);
+        _context.Suppliers.Add(supplier);
+        _context.SaveChanges();
         return CreatedAtAction(nameof(GetSupplierById),
             new { id = supplier.Id },
             supplier);
     }
 
     [HttpGet]
-    public IEnumerable<Supplier> GetAllSuppliers()
+    public IEnumerable<ReadSupplierDto> GetSuppliers()
     {
-        return suppliers;
+        return _mapper.Map<List<ReadSupplierDto>>(_context.Suppliers.ToList());
     }
 
     [HttpGet("range")]
-    public IEnumerable<Supplier> GettingRangedSuppliers([FromQuery] int skip, [FromQuery] int take)
+    public IEnumerable<ReadSupplierDto> GettingRangedSuppliers([FromQuery] int skip, [FromQuery] int take)
     {
-        return suppliers.Skip(skip).Take(take);
+        return _mapper.Map<List<ReadSupplierDto>>(_context.Suppliers.Skip(skip).Take(take).ToList());
     }
 
     [HttpGet("{id}")]
     public IActionResult GetSupplierById(int id)
     {
-        var supplier = suppliers.FirstOrDefault(x => x.Id == id);
+        var supplier = _context.Suppliers.FirstOrDefault(s => s.Id == id);
         if (supplier == null) return NotFound();
-        return Ok(supplier);
+        var supplierDto = _mapper.Map<ReadSupplierDto>(supplier);
+        return Ok(supplierDto);
+    }
+
+    [HttpDelete("{id}")]
+    public IActionResult DeleteSupplier(int id)
+    {
+        var supplier = _context.Suppliers.FirstOrDefault(x => x.Id == id);
+        if (supplier == null) return NotFound();
+        _context.Remove(supplier);
+        _context.SaveChanges();
+        return NoContent();
     }
 }

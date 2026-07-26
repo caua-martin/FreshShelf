@@ -22,8 +22,10 @@ public class Product
     [Required]
     [Range(1, 40000, ErrorMessage = "O preco deve ser entre 0.1" +
         "a 40000 reais")]
-    public decimal Price { get; set; }    
-//    public int SupplierId { get; set; }
-//    public Supplier? Supplier { get; set; }
+    public decimal Price { get; set; }
+    [Required]
+    public int SupplierId { get; set; }
+    public virtual Supplier Supplier { get; set; }
+    public virtual ICollection<OrderItem> OrderItems { get; set; }
 //    public ProductStatus Status { get; set; } = ProductStatus.Active;
 }

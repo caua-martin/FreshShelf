@@ -1,16 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using FreshShelf.Data;
+using FreshShelf.Services;
 
 //using FreshShelf.Data;
 using FreshShelf.Models;
 using FreshShelf.Models.Enums;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.OpenApi.Models;
 //using FreshShelf.Repositories;
 // 1. Instancia o seu repositório
 //var repositorio = new FreshShelfRepository();
@@ -51,12 +55,31 @@ using Microsoft.Extensions.Configuration;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("ProductConnection");
+var connectionString2 = builder.Configuration.GetConnectionString("UserConnection");
+
+builder.Services.AddDbContext<UserDbContext>
+    (opts =>
+    {
+        opts.UseMySql
+            (connectionString2,
+            ServerVersion.AutoDetect
+            (connectionString2));
+    });
 
 builder.Services.AddDbContext<ProductContext>(opts =>
-    opts.UseMySql(
+    opts.UseLazyLoadingProxies().UseMySql(
         connectionString,
         new MySqlServerVersion(new Version(8, 0, 36))
     ));
+
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<UserDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.
+    AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+builder.Services.AddScoped<UserService>();
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -67,8 +90,14 @@ string conexao = configuration.GetConnectionString("ProductConnection");
 
 Console.WriteLine(conexao);
 // Adiciona os serviços do Swagger
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "FilmesAPI", Version = "v1" });
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+});
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
@@ -81,6 +110,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
