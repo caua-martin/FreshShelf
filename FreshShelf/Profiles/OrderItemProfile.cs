@@ -12,6 +12,5 @@ public class OrderItemProfile : Profile
         CreateMap<OrderItem, UpdateOrderItemDto>();
         CreateMap<UpdateOrderItemDto, OrderItem>();
         CreateMap<OrderItem, ReadOrderItemDto>();
-        //Not Forget: For Member!
     }  
 }

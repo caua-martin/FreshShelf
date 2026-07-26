@@ -5,10 +5,12 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using FreshShelf.Data;
+using FreshShelf.Services;
 
 //using FreshShelf.Data;
 using FreshShelf.Models;
 using FreshShelf.Models.Enums;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -53,6 +55,16 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("ProductConnection");
+var connectionString2 = builder.Configuration.GetConnectionString("UserConnection");
+
+builder.Services.AddDbContext<UserDbContext>
+    (opts =>
+    {
+        opts.UseMySql
+            (connectionString2,
+            ServerVersion.AutoDetect
+            (connectionString2));
+    });
 
 builder.Services.AddDbContext<ProductContext>(opts =>
     opts.UseLazyLoadingProxies().UseMySql(
@@ -60,9 +72,14 @@ builder.Services.AddDbContext<ProductContext>(opts =>
         new MySqlServerVersion(new Version(8, 0, 36))
     ));
 
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<UserDbContext>()
+    .AddDefaultTokenProviders();
+
 builder.Services.
     AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+builder.Services.AddScoped<UserService>();
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -93,6 +110,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
