@@ -13,7 +13,7 @@ Criei o **FreshShelf** para estruturar esse fluxo no backend e aplicar na práti
 * **Arquitetura REST:** Estruturação de rotas e uso correto dos status codes HTTP.
 * **DTOs e AutoMapper:** Separação entre modelos de domínio e dados expostos na API para evitar *over-posting*.
 * **Persistência de Dados:** EF Core com MySQL, lidando com migrations e relacionamentos 1:N.
-* **Autenticação e Segurança:** Gerenciamento e hash de senhas com ASP.NET Identity.
+* **Autenticação e Segurança:** Gerenciamento e hash de senhas com ASP.NET Identity e tokwn JWT.
 
 ---
 
@@ -81,7 +81,7 @@ Login com validação e hash via ASP.NET Identity.
 (A API pode ser testada localmente via Swagger UI).
 
 Próximos Passos
-[ ] Autenticação por JWT Token
+[✅] Autenticação por JWT Token
 
 [ ] Controle de acesso por perfil (Admin, Restaurante, Fornecedor)
 
