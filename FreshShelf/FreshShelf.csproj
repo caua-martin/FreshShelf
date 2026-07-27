@@ -31,6 +31,7 @@
 
 		<!-- deixe apenas se estiver usando -->
 		<PackageReference Include="Microsoft.Graph" Version="6.2.0" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.21.0" />
 	</ItemGroup>
 
 </Project>
