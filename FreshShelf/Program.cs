@@ -80,6 +80,7 @@ builder.Services.
     AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<TokenService>();
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
