@@ -8,6 +8,13 @@ namespace FreshShelf.Services;
 
 public class TokenService
 {
+    private readonly IConfiguration _configuration;
+
+    public TokenService(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
     public string GenerateToken(User user)
     {
         Claim[] claims = new Claim[]
@@ -18,17 +25,15 @@ public class TokenService
             new Claim("loginTimestamp", DateTime.UtcNow.ToString())
         };
 
-        var chave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("9FJKALH9farhkalsfDSA9H1234567890AB"));
+        var key = _configuration["SymmetricSecurityKey"]
+                        ?? throw new Exception("Chave JWT não configurada");
 
-        var signingCredentials = new SigningCredentials(chave, SecurityAlgorithms.HmacSha256);
+        var chave = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(key));
 
-        var token = new JwtSecurityToken
-        (
-            expires: DateTime.Now.AddMinutes(10),
-            claims: claims,
-            signingCredentials: signingCredentials
-        );
+        var signingCredentials = new SigningCredentials(chave, SecurityAlgorithms.HmacSha256); 
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        var token = new JwtSecurityToken ( expires: DateTime.Now.AddMinutes(10), claims: claims, signingCredentials: signingCredentials ); 
+        return new JwtSecurityTokenHandler().WriteToken(token); 
     }
 }
