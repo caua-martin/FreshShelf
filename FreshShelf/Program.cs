@@ -85,6 +85,8 @@ builder.Services.
 
 builder.Services.AddScoped<IAuthorizationHandler, AgeAuthorization>();
 
+builder.Services.AddScoped<RestaurantService>();
+builder.Services.AddScoped<SupplierService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<TokenService>();
 
