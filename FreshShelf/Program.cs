@@ -76,7 +76,8 @@ builder.Services.AddDbContext<ProductContext>(opts =>
         new MySqlServerVersion(new Version(8, 0, 36))
     ));
 
-builder.Services.AddIdentity<User, IdentityRole>()
+builder.Services
+    .AddIdentity<User, AcessProfile>()
     .AddEntityFrameworkStores<UserDbContext>()
     .AddDefaultTokenProviders();
 
@@ -86,7 +87,10 @@ builder.Services.
 builder.Services.AddScoped<IAuthorizationHandler, AgeAuthorization>();
 
 builder.Services.AddScoped<RestaurantService>();
+builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<SupplierService>();
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<OrderItemService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<TokenService>();
 
@@ -167,7 +171,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 
 app.UseAuthentication();
 app.UseAuthorization();

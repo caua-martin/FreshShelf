@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FreshShelf.Data;
 
-public class UserDbContext : IdentityDbContext<User>
+public class UserDbContext : IdentityDbContext<User, AcessProfile, string>
 {
     public UserDbContext(DbContextOptions<UserDbContext> options)
         : base(options)

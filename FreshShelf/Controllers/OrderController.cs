@@ -2,7 +2,10 @@
 using FreshShelf.Data;
 using FreshShelf.Data.Dtos;
 using FreshShelf.Models;
+using FreshShelf.Services;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace FreshShelf.Controllers;
 
@@ -10,47 +13,59 @@ namespace FreshShelf.Controllers;
 [Route("[controller]")]
 public class OrderController : ControllerBase
 {
-    private ProductContext _context;
-    private IMapper _mapper;
+    private readonly OrderService _orderService;
 
-    public OrderController(ProductContext context, IMapper mapper)
+    public OrderController(OrderService orderService)
     {
-        _context = context;
-        _mapper = mapper;
+        _orderService = orderService;
     }
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
-    public IActionResult AddOrder([FromBody] CreateOrderDto orderDto)
+    public async Task<IActionResult> AddOrder([FromBody] CreateOrderDto orderDto)
     {
-        Order order = _mapper.Map<Order>(orderDto);
-        _context.Orders.Add(order);
-        _context.SaveChanges();
+        var order = await _orderService.AddOrder(orderDto);
         return CreatedAtAction(nameof(GetOrderById),
             new { id = order.Id},
             order);
     }
 
     [HttpGet]
-    public IEnumerable<ReadOrderDto> GetOrders()
+    public async Task<IActionResult> GetOrders()
     {
-        return _mapper.Map<List<ReadOrderDto>>(_context.Orders.ToList());
-    }
-
-    [HttpGet("range")]
-    public IEnumerable<ReadOrderDto> GettingRangeOrders([FromQuery] int skip, [FromQuery] int  take)
-    {
-        return _mapper.Map<List<ReadOrderDto>>(_context.Orders.Skip(skip).Take(take).ToList());
+        var orders = await _orderService.GetOrders();
+        return Ok(orders);
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetOrderById(int id)
+    public async Task<IActionResult> GetOrderById(int id)
     {
-        var order = _context.Orders.FirstOrDefault(x => x.Id == id);
+        var order = await _orderService.GetOrderById(id);
         if (order == null) return NotFound();
-        var orderDto = _mapper.Map<ReadOrderDto>(order);
-        return Ok(orderDto);
+        return Ok(order);
     }
 
-    
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateOrder(int id, UpdateOrderDto orderDto)
+    {
+        var order = await _orderService.UpdateDto(id, orderDto);
+        if (order == null) return NotFound();
+        return NoContent();
+    }
+
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> PatchUpdateOrder(int id, JsonPatchDocument<UpdateOrderDto> patch)
+    {
+        var order = await _orderService.PatchUpdateOrder(id, patch);
+        if (order == null) return NotFound();
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteOrder(int id)
+    {
+        var order = await _orderService.DeleteOrder(id);
+        if (order == null) return NotFound();
+        return NoContent();
+    }
 }

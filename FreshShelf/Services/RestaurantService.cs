@@ -9,8 +9,8 @@ namespace FreshShelf.Services;
 
 public class RestaurantService
 {
-    private ProductContext _context;
-    private IMapper _mapper;
+    private readonly ProductContext _context;
+    private readonly IMapper _mapper;
 
     public RestaurantService(ProductContext context, IMapper mapper)
     {
@@ -18,22 +18,21 @@ public class RestaurantService
         _mapper = mapper;
     }
 
-    public async Task<Restaurant> AddRestaurant(CreateRestaurantDto restaurantDto)
+    public async Task<ReadRestaurantDto> AddRestaurant(CreateRestaurantDto restaurantDto)
     {
         Restaurant restaurant = _mapper.Map<Restaurant>(restaurantDto);
         _context.Restaurants.Add(restaurant);
         await _context.SaveChangesAsync();
-        return restaurant;
+        return _mapper.Map<ReadRestaurantDto>(restaurant);
     }
 
     public async Task<IEnumerable<ReadRestaurantDto>> GetRestaurants()
     {
         var restaurants = await _context.Restaurants.ToListAsync();
-
         return _mapper.Map<IEnumerable<ReadRestaurantDto>>(restaurants);
     }
 
-    public async Task<IEnumerable<ReadRestaurantDto>> GettingRangeRestaurants(int skip, int take)
+    public async Task<IEnumerable<ReadRestaurantDto>> GetRestaurantsRange(int skip, int take)
     {
         var restaurantsRanged = await _context.Restaurants.Skip(skip).Take(take).ToListAsync();
 
@@ -47,7 +46,7 @@ public class RestaurantService
         return _mapper.Map<ReadRestaurantDto>(restaurant);
     }
 
-    public async Task<Restaurant?> UpdateRestaurant(int id, UpdateRestaurantDto restaurantDto)
+    public async Task<ReadRestaurantDto?> UpdateRestaurant(int id, UpdateRestaurantDto restaurantDto)
     {
         var restaurant = await _context.Restaurants.FirstOrDefaultAsync(restaurant => restaurant.Id == id);
         if(restaurant == null) return null;
@@ -55,10 +54,10 @@ public class RestaurantService
         _mapper.Map(restaurantDto, restaurant);
         await _context.SaveChangesAsync();
 
-        return restaurant;
+        return _mapper.Map<ReadRestaurantDto>(restaurant);
     }
 
-    public async Task<Restaurant?> PatchUpdateRestaurant(int id,
+    public async Task<ReadRestaurantDto?> PatchUpdateRestaurant(int id,
         JsonPatchDocument<UpdateRestaurantDto> patch)
     {
         var restaurant = await _context.Restaurants.FirstOrDefaultAsync(restaurant => restaurant.Id == id);
@@ -72,16 +71,16 @@ public class RestaurantService
 
         await _context.SaveChangesAsync();
 
-        return restaurant;
+        return _mapper.Map<ReadRestaurantDto>(restaurant);
     }
 
-    public async Task<Restaurant?> DeleteRestaurant(int id)
+    public async Task<ReadRestaurantDto?> DeleteRestaurant(int id)
     {
         var restaurant = await _context.Restaurants.FirstOrDefaultAsync(restaurant => restaurant.Id == id);
         if(restaurant == null) return null;
         _context.Restaurants.Remove(restaurant);
         await _context.SaveChangesAsync();
 
-        return restaurant;
+        return _mapper.Map<ReadRestaurantDto>(restaurant);
     }
 }

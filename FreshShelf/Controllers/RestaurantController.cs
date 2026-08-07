@@ -12,14 +12,10 @@ namespace FreshShelf.Controllers;
 [Route("[controller]")]
 public class RestaurantController : ControllerBase
 {
-    private ProductContext _context;
-    private IMapper _mapper;
-    private RestaurantService _restaurantService;
+    private readonly RestaurantService _restaurantService;
 
-    public RestaurantController(ProductContext context, IMapper mapper, RestaurantService restaurantService)
+    public RestaurantController(RestaurantService restaurantService)
     {
-        _context = context;
-        _mapper = mapper;
         _restaurantService = restaurantService;
     }
 
@@ -41,9 +37,9 @@ public class RestaurantController : ControllerBase
     }
 
     [HttpGet("range")]
-    public async Task<IActionResult> GettingRangeRestaurants([FromQuery] int skip, [FromQuery] int take)
+    public async Task<IActionResult> GetRestaurantsRange([FromQuery] int skip, [FromQuery] int take)
     {
-        var restaurantsRanged = await _restaurantService.GettingRangeRestaurants(skip, take);
+        var restaurantsRanged = await _restaurantService.GetRestaurantsRange(skip, take);
         return Ok(restaurantsRanged);
     }
 

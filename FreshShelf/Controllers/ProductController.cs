@@ -3,6 +3,7 @@ using Azure;
 using FreshShelf.Data;
 using FreshShelf.Data.Dtos;
 using FreshShelf.Models;
+using FreshShelf.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -17,14 +18,11 @@ namespace FreshShelf.Controllers;
 [Route("[controller]")]
 public class ProductController : ControllerBase
 {
-     
-    private ProductContext _context;
-    private IMapper _mapper;
+    private readonly ProductService _productService;
 
-    public ProductController(ProductContext context, IMapper mapper)
+    public ProductController(ProductService productService)
     {
-        _context = context;
-        _mapper = mapper;
+        _productService = productService;
     }
 
     /// <summary>
@@ -35,87 +33,64 @@ public class ProductController : ControllerBase
     /// <response code="201">Caso inserção seja feita com sucesso</response>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
-    public IActionResult AddProduct([FromBody] CreateProductDto productDto)
+    public async Task<IActionResult> AddProduct([FromBody] CreateProductDto productDto)
     {
-        Product product = _mapper.Map<Product>(productDto);
-        _context.Products.Add(product);
-        _context.SaveChanges();
+        var product = await _productService.AddProduct(productDto);
         return CreatedAtAction(nameof(GetProductById),
             new { id = product.Id},
             product);
     }
 
     [HttpGet]
-    // IActionResult?
-    public IEnumerable<ReadProductDto> GetProducts()
+    public async Task<IActionResult> GetProducts()
     {
-        return _mapper.Map<List<ReadProductDto>>(_context.Products.ToList());
+        var product = await _productService.GetProducts();
+        return Ok(product);
     }
 
     [HttpGet("range")]
-    // IActionResult?
-    public IEnumerable<ReadProductDto> GettingRangeProducts([FromQuery] int skip, [FromQuery] int take)
+    public async Task<IActionResult> GetProductsRange([FromQuery] int skip, [FromQuery] int take)
     {
-        return _mapper.Map<List<ReadProductDto>>(_context.Products.Skip(skip).Take(take).ToList());
+        var product = await _productService.GetProductsRange(skip, take);
+        return Ok(product);
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetProductById(int id)
+    public async Task<IActionResult> GetProductById(int id)
     {
-        var product = _context.Products.FirstOrDefault(product => product.Id == id);
-        if(product == null) return NotFound();
-        var productDto = _mapper.Map<ReadProductDto>(product);
-        return Ok(productDto);
+        var product = await _productService.GetProductsById(id);
+        if (product == null) return NotFound();
+        return Ok(product);
     }
 
     [HttpPut("{id}")]
-    public IActionResult UpdateProduct(int id, [FromBody] UpdateProductDto productDto)
+    public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductDto productDto)
     {
-        var product = _context.Products.FirstOrDefault(product => product.Id == id);
+        var product = await _productService.UpdateProduct(id, productDto);
         if (product == null) return NotFound();
-        _mapper.Map(productDto, product);
-        _context.SaveChanges();
         return NoContent();
     }
 
     [HttpPatch("{id}")]
-    public IActionResult PatchUpdateProduct(
+    public async Task<IActionResult> PatchUpdateProduct(
     int id,
     [FromBody] JsonPatchDocument<UpdateProductDto> patch)
     {
-        var product = _context.Products
-            .FirstOrDefault(p => p.Id == id);
+        var productDto = await _productService.PatchUpdateProduct(id, patch);
+        if (productDto == null) return NotFound();
+        //if (!ModelState.IsValid)
+        //    return ValidationProblem(ModelState);
 
-        if (product == null)
-            return NotFound();
-
-        var productToUpdate = _mapper.Map<UpdateProductDto>(product);
-
-        patch.ApplyTo(productToUpdate, ModelState);
-
-        if (!ModelState.IsValid)
-            return ValidationProblem(ModelState);
-
-        if (!TryValidateModel(productToUpdate))
-            return ValidationProblem(ModelState);
-
-        _mapper.Map(productToUpdate, product);
-
-        _context.SaveChanges();
-
+        //if (!TryValidateModel(productDto))
+        //    return ValidationProblem(ModelState);
         return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public IActionResult DeleteProduct(int id)
+    public async Task<IActionResult> DeleteProduct(int id)
     {
-        var product = _context.Products
-            .FirstOrDefault(p => p.Id == id);
-
-        if (product == null)
-            return NotFound();
-        _context.Remove(product);
-        _context.SaveChanges();
+        var product = await _productService.DeleteProduct(id);
+        if (product == null) return NotFound();
         return NoContent();
     }
 }

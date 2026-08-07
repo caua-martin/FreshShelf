@@ -14,14 +14,10 @@ namespace FreshShelf.Controllers;
 [Route("[controller]")]
 public class SupplierController : ControllerBase
 {
-    private ProductContext _context;
-    private IMapper _mapper;
-    private SupplierService _supplierService;
+    private readonly SupplierService _supplierService;
 
-    public SupplierController(ProductContext context, IMapper mapper, SupplierService supplierService)
+    public SupplierController(SupplierService supplierService)
     {
-        _context = context;
-        _mapper = mapper;
         _supplierService = supplierService;
     }
 
@@ -43,9 +39,9 @@ public class SupplierController : ControllerBase
     }
 
     [HttpGet("range")]
-    public async Task<IActionResult> GettingRangedSuppliers([FromQuery] int skip, [FromQuery] int take)
+    public async Task<IActionResult> GetSuppliersRange([FromQuery] int skip, [FromQuery] int take)
     {
-        var suppliersRanged = await _supplierService.GettingRangedSuppliers(skip, take);
+        var suppliersRanged = await _supplierService.GetSuppliersRange(skip, take);
 
         return Ok(suppliersRanged);
     }

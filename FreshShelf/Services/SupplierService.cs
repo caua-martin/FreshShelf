@@ -9,8 +9,8 @@ namespace FreshShelf.Services;
 
 public class SupplierService
 {
-    private ProductContext _context;
-    private IMapper _mapper;
+    private readonly ProductContext _context;
+    private readonly IMapper _mapper;
 
     public SupplierService(ProductContext context, IMapper mapper)    
     {
@@ -18,13 +18,13 @@ public class SupplierService
         _mapper = mapper;
     }    
 
-    public async Task<Supplier> AddSupplier(CreateSupplierDto supplierDto)
+    public async Task<ReadSupplierDto> AddSupplier(CreateSupplierDto supplierDto)
     {
         Supplier supplier = _mapper.Map<Supplier>(supplierDto);
         _context.Suppliers.Add(supplier);
         await _context.SaveChangesAsync();
 
-        return supplier;
+        return _mapper.Map<ReadSupplierDto>(supplier);
     }
 
     public async Task<IEnumerable<ReadSupplierDto>> GetSuppliers()
@@ -34,7 +34,7 @@ public class SupplierService
         return _mapper.Map<IEnumerable<ReadSupplierDto>>(suppliers);
     }
 
-    public async Task<IEnumerable<ReadSupplierDto>> GettingRangedSuppliers(int skip, int take)
+    public async Task<IEnumerable<ReadSupplierDto>> GetSuppliersRange(int skip, int take)
     {
         var suppliersRanged = await _context.Suppliers.Skip(skip).Take(take).ToListAsync();
 
@@ -48,17 +48,17 @@ public class SupplierService
         return _mapper.Map<ReadSupplierDto>(supplier);
     }
 
-    public async Task<Supplier?> UpdateSupplier(int id, UpdateSupplierDto supplierDto)
+    public async Task<ReadSupplierDto?> UpdateSupplier(int id, UpdateSupplierDto supplierDto)
     {
         var supplier = await _context.Suppliers.FirstOrDefaultAsync(supplier => supplier.Id == id);
         if(supplier == null) return null;
         _mapper.Map(supplierDto, supplier);
         await _context.SaveChangesAsync();
 
-        return supplier;
+        return _mapper.Map<ReadSupplierDto>(supplier);
     }
 
-    public async Task<Supplier?> PatchUpdateSupplier(int id, JsonPatchDocument<UpdateSupplierDto> patch)
+    public async Task<ReadSupplierDto?> PatchUpdateSupplier(int id, JsonPatchDocument<UpdateSupplierDto> patch)
     {
         var supplier = await _context.Suppliers.FirstOrDefaultAsync(supplier => supplier.Id == id);
         if(supplier == null) return null;
@@ -71,16 +71,16 @@ public class SupplierService
 
         await _context.SaveChangesAsync();
 
-        return supplier;
+        return _mapper.Map<ReadSupplierDto>(supplier);
     }
 
-    public async Task<Supplier?> DeleteSupplier(int id)
+    public async Task<ReadSupplierDto?> DeleteSupplier(int id)
     {
         var supplier = await _context.Suppliers.FirstOrDefaultAsync(supplier => supplier.Id == id);
         if(supplier == null) return null;
         _context.Suppliers.Remove(supplier);
         await _context.SaveChangesAsync();
 
-        return supplier;
+        return _mapper.Map<ReadSupplierDto>(supplier);
     }
 }
