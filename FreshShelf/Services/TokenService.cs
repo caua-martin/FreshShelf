@@ -20,7 +20,7 @@ public class TokenService
         Claim[] claims = new Claim[]
         {
             new Claim("username", user.UserName),
-            new Claim("id", user.Id),
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
             new Claim(ClaimTypes.DateOfBirth, user.BirthDate.ToString()),
             new Claim("loginTimestamp", DateTime.UtcNow.ToString())
         };

@@ -5,6 +5,8 @@ using FreshShelf.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.JsonPatch;
+using FreshShelf.Services;
 
 namespace FreshShelf.Controllers;
 
@@ -12,54 +14,69 @@ namespace FreshShelf.Controllers;
 [Route("[controller]")]
 public class SupplierController : ControllerBase
 {
-    private ProductContext _context;
-    private IMapper _mapper;
+    private readonly SupplierService _supplierService;
 
-    public SupplierController(ProductContext context, IMapper mapper)
+    public SupplierController(SupplierService supplierService)
     {
-        _context = context;
-        _mapper = mapper;
+        _supplierService = supplierService;
     }
 
     [HttpPost]
-    public IActionResult CreateSupplier([FromBody] CreateSupplierDto supplierDto)
+    public async Task<IActionResult> AddSupplier([FromBody] CreateSupplierDto supplierDto)
     {
-        Supplier supplier = _mapper.Map<Supplier>(supplierDto);
-        _context.Suppliers.Add(supplier);
-        _context.SaveChanges();
+        var supplier = await _supplierService.AddSupplier(supplierDto);
         return CreatedAtAction(nameof(GetSupplierById),
             new { id = supplier.Id },
             supplier);
     }
 
     [HttpGet]
-    public IEnumerable<ReadSupplierDto> GetSuppliers()
+    public async Task<IActionResult> GetSuppliers()
     {
-        return _mapper.Map<List<ReadSupplierDto>>(_context.Suppliers.ToList());
+        var supplier = await _supplierService.GetSuppliers();
+
+        return Ok(supplier);
     }
 
     [HttpGet("range")]
-    public IEnumerable<ReadSupplierDto> GettingRangedSuppliers([FromQuery] int skip, [FromQuery] int take)
+    public async Task<IActionResult> GetSuppliersRange([FromQuery] int skip, [FromQuery] int take)
     {
-        return _mapper.Map<List<ReadSupplierDto>>(_context.Suppliers.Skip(skip).Take(take).ToList());
+        var suppliersRanged = await _supplierService.GetSuppliersRange(skip, take);
+
+        return Ok(suppliersRanged);
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetSupplierById(int id)
+    public async Task<IActionResult> GetSupplierById(int id)
     {
-        var supplier = _context.Suppliers.FirstOrDefault(s => s.Id == id);
-        if (supplier == null) return NotFound();
-        var supplierDto = _mapper.Map<ReadSupplierDto>(supplier);
-        return Ok(supplierDto);
+        var supplier = await _supplierService.GetSupplierById(id);
+        if(supplier == null) return NotFound();
+        return Ok(supplier);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateSupplier(int id, UpdateSupplierDto supplierDto)
+    {
+        var supplier = await _supplierService.UpdateSupplier(id, supplierDto);
+        if(supplier == null) return NotFound();
+
+        return NoContent();
+    }
+
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> PatchUpdateSupplier(int id, JsonPatchDocument<UpdateSupplierDto> patch)
+    {
+        var supplier = await _supplierService.PatchUpdateSupplier(id, patch);
+        if(supplier == null) return NotFound();
+
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public IActionResult DeleteSupplier(int id)
+    public async Task<IActionResult> DeleteSupplier(int id)
     {
-        var supplier = _context.Suppliers.FirstOrDefault(x => x.Id == id);
-        if (supplier == null) return NotFound();
-        _context.Remove(supplier);
-        _context.SaveChanges();
+        var supplier = await _supplierService.DeleteSupplier(id);
+        if(supplier == null) return NotFound();
         return NoContent();
     }
 }

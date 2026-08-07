@@ -10,6 +10,7 @@ public class SupplierProfile : Profile
     {
         CreateMap<CreateSupplierDto, Supplier>();
         CreateMap<Supplier, ReadSupplierDto>();
+        CreateMap<Supplier, UpdateSupplierDto>();
         CreateMap<UpdateSupplierDto, Supplier>();
     }
 }

@@ -2,7 +2,9 @@
 using FreshShelf.Data;
 using FreshShelf.Data.Dtos;
 using FreshShelf.Models;
+using FreshShelf.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace FreshShelf.Controllers;
 
@@ -10,44 +12,59 @@ namespace FreshShelf.Controllers;
 [Route("[controller]")]
 public class OrderItemController : ControllerBase
 {
-    public ProductContext _context;
-    public IMapper _mapper;
+    public readonly OrderItemService _orderItemService;
 
-    public OrderItemController(ProductContext context, IMapper mapper)
+    public OrderItemController(OrderItemService orderItemService)
     {
-        _context = context;
-        _mapper = mapper;
+        _orderItemService = orderItemService;
     }
 
-    [HttpPost]
-    public IActionResult AddOrderItem([FromBody] CreateOrderItemDto orderItemDto)
+    [HttpPost("{orderId}/Items")]
+    public async Task<IActionResult> AddOrderItem(int orderId, [FromBody] CreateOrderItemDto orderItemDto)
     {
-        OrderItem orderItem = _mapper.Map<OrderItem>(orderItemDto);
-        _context.OrderItems.Add(orderItem);
-        _context.SaveChanges();
+        var orderItem = await _orderItemService.AddOrderItem(orderId, orderItemDto);
+        if(orderItem == null) return NotFound();
         return CreatedAtAction(nameof(GetOrderItemById),
             new {id = orderItem.Id},
             orderItem);
     }
 
     [HttpGet]
-    public IEnumerable<ReadOrderItemDto> GetOrderItems()
+    public async Task<IActionResult> GetOrderItems()
     {
-        return _mapper.Map<List<ReadOrderItemDto>>(_context.OrderItems.ToList());
-    }
-
-    [HttpGet("range")]
-    public IEnumerable<ReadOrderItemDto> GetRangeOrderItems([FromQuery] int skip, [FromQuery] int take)
-    {
-        return _mapper.Map<List<ReadOrderItemDto>>(_context.OrderItems.Skip(skip).Take(take).ToList());
+        var items = await _orderItemService.GetOrderItems();
+        return Ok(items);
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetOrderItemById(int id)
+    public async Task<IActionResult> GetOrderItemById(int id)
     {
-        var orderItem = _context.OrderItems.FirstOrDefault(orderItem => orderItem.Id == id);
-        if (orderItem == null) return NotFound();
-        var orderItemDto = _mapper.Map<ReadOrderItemDto>(orderItem);
-        return Ok(orderItemDto);
+        var items = await _orderItemService.GetOrderItemById(id);
+        if (items == null) return NotFound();
+        return Ok(items);
+    }
+
+    [HttpGet("{orderId}/Items")]
+    public async Task<IActionResult> GetItemsOfOrders(int orderId)
+    {
+        var items = await _orderItemService.GetItemsOfOrders(orderId);
+        if (items == null) return NotFound();
+        return Ok(items);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateOrderItem(int id, UpdateOrderItemDto updateOrderItemDto)
+    {
+        var items = await _orderItemService.UpdateOrderItem(id, updateOrderItemDto);
+        if (items == null) return NotFound();
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteOrderItem(int id)
+    {
+        var items = await _orderItemService.DeleteOrderItem(id);
+        if (items == null) return NotFound();
+        return NoContent();
     }
 }
