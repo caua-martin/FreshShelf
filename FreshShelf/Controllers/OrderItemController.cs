@@ -1,10 +1,7 @@
-﻿using AutoMapper;
-using FreshShelf.Data;
-using FreshShelf.Data.Dtos;
-using FreshShelf.Models;
+﻿using FreshShelf.Data.Dtos;
 using FreshShelf.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace FreshShelf.Controllers;
 
@@ -20,6 +17,7 @@ public class OrderItemController : ControllerBase
     }
 
     [HttpPost("{orderId}/Items")]
+    [Authorize(Roles = "Restaurant,Admin")]
     public async Task<IActionResult> AddOrderItem(int orderId, [FromBody] CreateOrderItemDto orderItemDto)
     {
         var orderItem = await _orderItemService.AddOrderItem(orderId, orderItemDto);
@@ -30,6 +28,7 @@ public class OrderItemController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Restaurant,Admin")]
     public async Task<IActionResult> GetOrderItems()
     {
         var items = await _orderItemService.GetOrderItems();
@@ -37,6 +36,7 @@ public class OrderItemController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Restaurant,Admin")]
     public async Task<IActionResult> GetOrderItemById(int id)
     {
         var items = await _orderItemService.GetOrderItemById(id);
@@ -45,6 +45,7 @@ public class OrderItemController : ControllerBase
     }
 
     [HttpGet("{orderId}/Items")]
+    [Authorize(Roles = "Restaurant,Admin")]
     public async Task<IActionResult> GetItemsOfOrders(int orderId)
     {
         var items = await _orderItemService.GetItemsOfOrders(orderId);
@@ -53,6 +54,7 @@ public class OrderItemController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Restaurant,Admin")]
     public async Task<IActionResult> UpdateOrderItem(int id, UpdateOrderItemDto updateOrderItemDto)
     {
         var items = await _orderItemService.UpdateOrderItem(id, updateOrderItemDto);
@@ -61,6 +63,7 @@ public class OrderItemController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Restaurant,Admin")]
     public async Task<IActionResult> DeleteOrderItem(int id)
     {
         var items = await _orderItemService.DeleteOrderItem(id);

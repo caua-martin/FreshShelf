@@ -11,7 +11,6 @@ using Microsoft.IdentityModel.Tokens;
 using FreshShelf.Authorization;
 using Microsoft.AspNetCore.Authorization;
 
-//using FreshShelf.Data;
 using FreshShelf.Models;
 using FreshShelf.Models.Enums;
 using Microsoft.AspNetCore.Identity;
@@ -79,13 +78,15 @@ builder.Services.AddDbContext<ProductContext>(opts =>
 builder.Services
     .AddIdentity<User, AcessProfile>()
     .AddEntityFrameworkStores<UserDbContext>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddRoles<AcessProfile>();
 
 builder.Services.
     AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddScoped<IAuthorizationHandler, AgeAuthorization>();
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<RestaurantService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<SupplierService>();
@@ -106,7 +107,13 @@ Console.WriteLine(conexao);
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ProductsAPI", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ProductsAPI", Description = "API to connect restaurants to suppliers",
+        Contact = new OpenApiContact
+        {
+            Name = "Suporte",
+            Email = "cauamartin220329@gmail.com",
+            Url = new Uri("https://github.com/caua-martin/FreshShelf")
+        },Version = "v1" });
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
@@ -163,6 +170,13 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    await RoleSeeder.SeedRolesAsync(services);
+}
 
 // Ativa o Swagger no navegador
 if (app.Environment.IsDevelopment())

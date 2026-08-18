@@ -30,6 +30,13 @@ public class UserService
         {
             throw new ApplicationException("Fail to register user!");
         }
+
+        IdentityResult roleResult = await _userManager.AddToRoleAsync(user, dto.Role);
+
+        if (!roleResult.Succeeded)
+        {
+            throw new ApplicationException("Fail to assign role!");
+        }
     }
 
     public async Task<string> Login(LoginUserDto dto)
@@ -42,7 +49,7 @@ public class UserService
 
         var user = _signInManager.UserManager.Users.FirstOrDefault(user => user.NormalizedUserName == dto.Username.ToUpper());
 
-        var token = _tokenService.GenerateToken(user);
+        var token = await _tokenService.GenerateToken(user);
 
         return token;
     }
