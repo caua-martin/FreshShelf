@@ -4,6 +4,7 @@ using FreshShelf.Data.Dtos;
 using FreshShelf.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FreshShelf.Services;
 
@@ -11,16 +12,28 @@ public class RestaurantService
 {
     private readonly ProductContext _context;
     private readonly IMapper _mapper;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public RestaurantService(ProductContext context, IMapper mapper)
+    public RestaurantService(ProductContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _mapper = mapper;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<ReadRestaurantDto> AddRestaurant(CreateRestaurantDto restaurantDto)
     {
         Restaurant restaurant = _mapper.Map<Restaurant>(restaurantDto);
+
+        var userId = _httpContextAccessor.HttpContext?
+            .User
+            .FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (userId == null)
+            throw new UnauthorizedAccessException();
+
+        restaurant.UserId = userId;
+
         _context.Restaurants.Add(restaurant);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadRestaurantDto>(restaurant);
@@ -51,6 +64,18 @@ public class RestaurantService
         var restaurant = await _context.Restaurants.FirstOrDefaultAsync(restaurant => restaurant.Id == id);
         if(restaurant == null) return null;
 
+        var userId = _httpContextAccessor.HttpContext?
+            .User
+            .FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+            throw new UnauthorizedAccessException();
+
+        var isAdmin = _httpContextAccessor.HttpContext?
+            .User
+            .IsInRole("Admin") ?? false;
+        if (!isAdmin && restaurant.UserId != userId)
+            return null;
+
         _mapper.Map(restaurantDto, restaurant);
         await _context.SaveChangesAsync();
 
@@ -62,6 +87,18 @@ public class RestaurantService
     {
         var restaurant = await _context.Restaurants.FirstOrDefaultAsync(restaurant => restaurant.Id == id);
         if(restaurant == null) return null;
+
+        var userId = _httpContextAccessor.HttpContext?
+            .User
+            .FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+            throw new UnauthorizedAccessException();
+
+        var isAdmin = _httpContextAccessor.HttpContext?
+            .User
+            .IsInRole("Admin") ?? false;
+        if (!isAdmin && restaurant.UserId != userId)
+            return null;
 
         var restaurantToUpdate = _mapper.Map<UpdateRestaurantDto>(restaurant);
 
@@ -78,6 +115,19 @@ public class RestaurantService
     {
         var restaurant = await _context.Restaurants.FirstOrDefaultAsync(restaurant => restaurant.Id == id);
         if(restaurant == null) return null;
+
+        var userId = _httpContextAccessor.HttpContext?
+            .User
+            .FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+            throw new UnauthorizedAccessException();
+
+        var isAdmin = _httpContextAccessor.HttpContext?
+            .User
+            .IsInRole("Admin") ?? false;
+        if (!isAdmin && restaurant.UserId != userId)
+            return null;
+
         _context.Restaurants.Remove(restaurant);
         await _context.SaveChangesAsync();
 

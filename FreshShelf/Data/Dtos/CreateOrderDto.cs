@@ -8,11 +8,8 @@ public class CreateOrderDto
 {
     [Required]
     public int RestaurantId { get; set; }
-
     [Required]
     public int SupplierId { get; set; }
-
-
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

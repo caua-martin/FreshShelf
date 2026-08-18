@@ -4,6 +4,7 @@ using FreshShelf.Data.Dtos;
 using FreshShelf.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FreshShelf.Services;
 
@@ -11,16 +12,32 @@ public class ProductService
 {
     private readonly ProductContext _context;
     private readonly IMapper _mapper;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ProductService(ProductContext context, IMapper mapper)
+    public ProductService(ProductContext context, IMapper mapper, IHttpContextAccessor contextAccessor)
     {
         _context = context;
         _mapper = mapper;
+        _httpContextAccessor = contextAccessor;
     }
 
     public async Task<ReadProductDto?> AddProduct(CreateProductDto productDto)
     {
-        Product product = _mapper.Map<Product>(productDto);
+        var userId = _httpContextAccessor.HttpContext?
+            .User
+            .FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) throw new UnauthorizedAccessException();
+
+        var isAdmin = _httpContextAccessor.HttpContext?
+            .User
+            .IsInRole("Admin") ?? false;
+
+        var supplier = await _context.Suppliers.FirstOrDefaultAsync(supplier => supplier.Id == productDto.SupplierId);
+        if(supplier == null) return null;
+
+        if (!isAdmin && supplier.UserId == userId) return null;
+
+        var product = _mapper.Map<Product>(productDto);
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProductDto>(product);
@@ -49,6 +66,18 @@ public class ProductService
     {
         var product = await _context.Products.FirstOrDefaultAsync(product => product.Id == id);
         if (product == null) return null;
+
+        var userId = _httpContextAccessor.HttpContext?
+            .User
+            .FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) throw new UnauthorizedAccessException();
+
+        var isAdmin = _httpContextAccessor.HttpContext?
+            .User
+            .IsInRole("Admin") ?? false;
+        if(!isAdmin && product.Supplier.UserId !=  userId)
+            return null;
+
         _mapper.Map(productDto, product);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProductDto>(product);
@@ -56,7 +85,7 @@ public class ProductService
 
     public async Task<ReadProductDto?> PatchUpdateProduct(int id, JsonPatchDocument<UpdateProductDto> patch)
     {
-        var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+        var product = await _context.Products.Include(p => p.Supplier).FirstOrDefaultAsync(p => p.Id == id);
         if (product == null) return null;
         var productToUpdate = _mapper.Map<UpdateProductDto>(product);
         patch.ApplyTo(productToUpdate);
@@ -70,8 +99,20 @@ public class ProductService
 
     public async Task<ReadProductDto?> DeleteProduct(int id)
     {
-        var product = await _context.Products.FirstOrDefaultAsync(product => product.Id == id);
+        var product = await _context.Products.Include(p=>p.Supplier).FirstOrDefaultAsync(product => product.Id == id);
         if (product == null) return null;
+
+        var userId = _httpContextAccessor.HttpContext?
+            .User
+            .FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) throw new UnauthorizedAccessException();
+
+        var isAdmin = _httpContextAccessor.HttpContext?
+            .User
+            .IsInRole("Admin") ?? false;
+        if(!isAdmin && product.Supplier.UserId != userId)
+            return null;
+
         _context.Products.Remove(product);
         await _context.SaveChangesAsync();
         return _mapper.Map<ReadProductDto>(product);
